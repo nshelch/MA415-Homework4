@@ -1,0 +1,126 @@
+---
+title: "Assignment 4"
+author: "Natalya Shelchkova"
+date: "February 23, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Section 10.5 Problem 5
+
+What does tibble::enframe() do? When might you use it?
+
+Enframe() takes atomic vectors/lists and makes them into two column data frames. This is useful when you load in data as a list and you want to convert it into a data frame, or you have to set variables and then you want to save the variables you set as a data frame. 
+
+## Section 12.6.1 Problem 3
+
+I claimed that iso2 and iso3 were redundant with country. Confirm this claim.
+
+iso2 and iso3 are redundant with country because while country contains the full name of the country (i.e. Afghanistan) iso2 contains the 2 letter abbreviation (AF) and iso3 contains the three letter abbreviation (AFG).
+
+## Section 12.6.1 Problem 4
+
+For each country, year, and sex, compute the total number of cases of TB. Make an informative visualization of the data.
+
+```{r, echo = FALSE}
+library(tidyverse)
+who <-  tidyr::who
+
+# # Removes NA, and makes the columns new_sp_m014:newrel_f65 into variables
+# who1 <- who %>% 
+#   gather(new_sp_m014:newrel_f65, key = "key", value = "cases", na.rm = TRUE)
+# 
+# # makes names consistent
+# who2 <- who1 %>% 
+#   mutate(key = stringr::str_replace(key, "newrel", "new_rel"))
+# 
+# # seperates cases into whether the tb is new or recurrent, the type of tb, and the sax/age of the individual
+# who3 <- who2 %>% 
+#   separate(key, c("new", "type", "sexage"), sep = "_")
+# 
+# # removes the columns new, iso2, and iso3 since they are reduntant
+# who4 <- who3 %>% 
+#   select(-new, -iso2, -iso3)
+# 
+# # seperates sex and age into two columns
+# who5 <- who4 %>% 
+#   separate(sexage, c("sex", "age"), sep = 1)
+
+# the pipe version of the above code
+tb_data <- who %>%
+  gather(code, value, new_sp_m014:newrel_f65, na.rm = TRUE) %>% 
+  mutate(code = stringr::str_replace(code, "newrel", "new_rel")) %>%
+  separate(code, c("new", "var", "sexage")) %>% 
+  select(-new, -iso3) %>% 
+  separate(sexage, c("sex", "age"), sep = 1)
+
+## Computing totals
+
+# by year
+year_totals <-  tb_data %>%
+  group_by(year) %>%
+  summarise(year_total = sum(value))
+
+q <- ggplot(data = year_totals) + 
+  geom_point(mapping = aes(x = year, y = year_total)) +
+  geom_smooth(mapping = aes(x = year, y = year_total))
+q + labs(x = "Year", y = "Total Cases of TB", title = "Cases of TB Over the Years")
+
+# by country
+country_totals <- tb_data %>%
+  group_by(iso2) %>%
+  summarise(country_total = sum(value))
+
+p <- ggplot(data = country_totals) + 
+  geom_col(mapping = aes(x = iso2, y = country_total))
+p1 <- p + labs(x = "Country", y = "Total Cases of TB", title = "Cases of TB per Country")
+p1 + theme(axis.text.x = element_text(angle = 90, size = 5))
+
+# by sex
+sex_totals <- tb_data %>%
+  group_by(sex) %>%
+  summarise(sex_total = sum(value))
+
+r <- ggplot(data = sex_totals) + 
+  geom_col(mapping = aes(x = sex, y = sex_total))
+r + labs(x = "Sex", y = "Total Cases of TB", title = "Cases of TB Based on Sex")
+
+```
+
+### Case Study
+
+```{r Loading Data, echo = FALSE}
+
+rawdat <- readRDS("~/Data Science in R - MA415/MA415-Homework4/rawdat.RDS")
+
+bb <- read_csv("billboard.csv")
+bb.1 <- bb %>% select(year, artist = artist.inverted, track, time, date = date.entered, id = 8:82)
+names(bb.1)[6:80] = paste("wk",1:75, sep = "")
+bb_data <- bb.1
+
+```
+
+## Reproducing Table 4 to Table 6
+
+```{r}
+
+# transformed_table <- melt(rawdat, id = c("religion"), variable.name = "income", value.name = "freq")
+# OR
+
+transformed_table_v2 <- rawdat %>% gather(key = "income", value = "freq", -religion)
+
+```
+
+
+## Reproducing Table 7 to Table 8
+
+```{r}
+
+bb_v2 <- bb_data %>% gather(key = "week", value = "rank", -year, -artist, -time, -track, -date)
+bb_v3 <- bb_v2 %>% separate(week, c("rem", "week"), sep = 2)
+bb_v4 <- bb_v3 %>% select(year, artist, track, time, date, week, rank)
+
+```
