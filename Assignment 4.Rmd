@@ -7,6 +7,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
 ```
 
 ## Section 10.5 Problem 5
@@ -19,7 +20,26 @@ Enframe() takes atomic vectors/lists and makes them into two column data frames.
 
 I claimed that iso2 and iso3 were redundant with country. Confirm this claim.
 
-iso2 and iso3 are redundant with country because while country contains the full name of the country (i.e. Afghanistan) iso2 contains the 2 letter abbreviation (AF) and iso3 contains the three letter abbreviation (AFG).
+If we take the number of distinct values in iso2 and iso3 we will see that this number is the same:
+
+```{r}
+who <- tidyr::who
+iso2_count <- n_distinct(who["iso2"])
+iso3_count <- n_distinct(who["iso3"])
+iso2_count
+iso3_count
+```
+
+At the very least this means that they have the same number of distinct values. Furthermore, if we look at the unique values in iso2 and iso3, we will see that they are the same, with the exception that iso3 is a 3 letter abbreviation:
+
+```{r}
+iso2_unique <- unique(who["iso2"])
+iso3_unique <- unique(who["iso3"])
+iso2_unique
+iso3_unique
+
+```
+
 
 ## Section 12.6.1 Problem 4
 
@@ -111,6 +131,7 @@ bb_data <- bb.1
 # OR
 
 transformed_table_v2 <- rawdat %>% gather(key = "income", value = "freq", -religion)
+transformed_table_v2
 
 ```
 
@@ -122,5 +143,6 @@ transformed_table_v2 <- rawdat %>% gather(key = "income", value = "freq", -relig
 bb_v2 <- bb_data %>% gather(key = "week", value = "rank", -year, -artist, -time, -track, -date)
 bb_v3 <- bb_v2 %>% separate(week, c("rem", "week"), sep = 2)
 bb_v4 <- bb_v3 %>% select(year, artist, track, time, date, week, rank)
+bb_v4
 
 ```
